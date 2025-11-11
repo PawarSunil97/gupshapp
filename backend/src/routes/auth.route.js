@@ -2,15 +2,15 @@ import { Router } from "express";
 
 const router = Router();
 
-router.get('/signup', (req, res) => {
+router.get('/signup', (_, res) => {
   res.send('signup endpoint');
 });
 
-router.get('/login', (req, res) => {
+router.get('/login', (_, res) => {
   res.send('login endpoint');
 });
 
-router.get('/logout', (req, res) => {
+router.get('/logout', (_, res) => {
   res.send('logout endpoint');
 });
 
