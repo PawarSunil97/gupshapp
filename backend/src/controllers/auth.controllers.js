@@ -57,13 +57,10 @@ export const login = async(req, res) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
         const user = await User.findOne({ email });
-        if(!user) {
-            return res.status(400).json({ message: 'Invalid email address' });
-        }
         const isMatch = await bcrypt.compare(password, user.password);
-        if(!isMatch) {
-            return res.status(400).json({ message: 'Invalid  password' });
-        }
+       if(!user || !isMatch) {
+          return res.status(400).json({ message: 'Invalid credentials' });
+         }
         generateToken(user._id, res);
 
     return res.status(200).json({
@@ -74,18 +71,19 @@ export const login = async(req, res) => {
       message: "Login successful",
     });
     } catch (error) {
-        console.error('Error during login:', error);
         return res.status(500).json({ message: ' internal Server error' });
     }
 }
 
 export const logout = async (_, res) => {
-
-    res.clearCookie("token","", {
-       
+    
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: ENV.NODE_ENV === "production",
+        sameSite: "strict",
         maxAge: 0,
     });
-    res.status(200).json({ message: "Logout successful"
+     res.status(200).json({ message: "Logout successful"
         
     })
 }
