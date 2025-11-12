@@ -15,7 +15,9 @@ const __dirname = path.resolve();
 
 //  connect DB
 connectDb();
+//use middlewares
 
+app.use(express.json());
 //  Register API routes
 app.use('/api/auth', authRouter);
 app.use('/api/message', messageRouter);
