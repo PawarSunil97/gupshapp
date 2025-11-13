@@ -5,6 +5,7 @@ import { ENV } from '../Env.js';
 import { connectDb } from '../config/db.js';
 import authRouter from './routes/auth.route.js';
 import messageRouter from './routes/message.route.js';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ connectDb();
 //use middlewares
 
 app.use(express.json());
+app.use(cookieParser())
 //  Register API routes
 app.use('/api/auth', authRouter);
 app.use('/api/message', messageRouter);
