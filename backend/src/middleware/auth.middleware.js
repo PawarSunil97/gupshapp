@@ -8,16 +8,21 @@ export const protectRoute = async(req, res, next) => {
         const token = req.cookies.jwt;
         if(!token) return res.status(401).json({ message: "Unauthorized: No token provided" });
             
-            const decoded = jwt.verify(token, ENV.JWT_SECRET);
-        if(!decoded) return res.status(401).json({ message: "Unauthorized: Invalid token" });
-    
+          const decoded = jwt.verify(token, ENV.JWT_SECRET);
             const user = await User.findById(decoded.userId).select('-password');
-            if(!user) return res.status(401).json({ message: "Unauthorized: User not found" });
-            req.user = user;
-            next();
+       if(!user) return res.status(401).json({ message: "Unauthorized: User not found" });
+       req.user = user;
+        next();
         
     } catch (error) {
-        return res.status(500).json({ message: "internal server error" + error.message });
-        
+        console.error("Auth middleware error:", error);
+       if (error.name === 'JsonWebTokenError') {
+           return res.status(401).json({ message: "Unauthorized: Invalid token" });
+       }
+       if (error.name === 'TokenExpiredError') {
+           return res.status(401).json({ message: "Unauthorized: Token expired" });
+       }
+       
+        return res.status(500).json({ message: "Internal server error" });
    }
 }

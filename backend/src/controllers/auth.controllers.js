@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import { generateToken } from "../utils/utils.js";
 import { sendWelcomeEmail } from "../emails/EmailHandler.js";
 import { ENV } from "../../Env.js";
-import cloudinary from "../utils/cloudnary.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const signup = async(req, res) => {
     const { fullname, email, password } = req.body;
@@ -94,11 +94,22 @@ export const updateProfile = async (req, res) => {
         if(!profilePicture) {
             return res.status(400).json({ message: "Profile picture is required" });
         }
+        if(!profilePicture.startsWith('data:image/')) {
+            return res.status(400).json({ message: "Invalid image format" });
+        }
         const userId = req.user._id;
         const uploadResponse = await cloudinary.uploader.upload(profilePicture)
-        const userUpdated = await User.findByIdAndUpdate(userId, { profilePicture: uploadResponse.secure_url }, { new: true });
-        res.status(200).json({ message: "Profile updated successfully",userUpdated });
-
+        const userUpdated = await User.findByIdAndUpdate(
+           userId, 
+           { profilePicture: uploadResponse.secure_url }, 
+           { new: true }
+       ).select('-password');
+       
+       res.status(200).json({ 
+           message: "Profile updated successfully",
+           user: userUpdated 
+       });
+ 
         
     } catch (error) {
         console.error("Error updating profile:", error);
