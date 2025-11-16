@@ -6,9 +6,9 @@ import { ENV } from "../../Env.js";
 import cloudinary from "../utils/cloudinary.js";
 
 export const signup = async(req, res) => {
-    const { fullname, email, password } = req.body;
+    const { fullName, email, password } = req.body;
     try {
-        if(!fullname || !email || !password) {
+        if(!fullName || !email || !password) {
             return res.status(400).json({ message: 'All fields are required' });
         }
         if(password.length < 6) {
@@ -26,19 +26,19 @@ export const signup = async(req, res) => {
         // hash password
         const salt= await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt); 
-        const newUser = new User({ fullname, email, password: hashedPassword });
+        const newUser = new User({ fullName, email, password: hashedPassword });
         if (newUser) {
             const savedUser=  await newUser.save();
             generateToken(savedUser._id, res)
            
             res.status(201).json({ 
                 _id: newUser._id,
-                fullname: newUser.fullname,
+                fullName: newUser.fullName,
                 email: newUser.email,
                 picture: newUser.profilePicture
             }); 
             try {
-                await sendWelcomeEmail(savedUser.email, savedUser.fullname,ENV.CLIENT_URL);
+                await sendWelcomeEmail(savedUser.email, savedUser.fullName,ENV.CLIENT_URL);
             }catch (error) {
                 console.error('Failed to send welcome email:', error);
             }
@@ -66,7 +66,7 @@ export const login = async(req, res) => {
 
     return res.status(200).json({
       _id: user._id,
-      fullname: user.fullname,
+      fullName: user.fullName,
       email: user.email,
       picture: user.profilePicture || null,
       message: "Login successful",
