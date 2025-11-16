@@ -13,25 +13,26 @@ export const useAuthStore = create((set) => ({
            set({ authUser: res.data });
            
        } catch (error) {
-           console.error("Error checking auth:", error);
+          toast.error("Authentication check failed",error);
            set({ authUser: null });
        } finally {
            set({ isCheckingAuth: false });
         }
     },
 
-    signup: async (formData) => {
-        set({ isSigningUp: true });
-        try {
-            const res = await apiClient.post("/auth/signup", formData);
-            set({ authUser: res.data.user, isSigningUp: true });
-            toast.success("Signup successful!");
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Signup failed");
-        } finally {
-            set({ isSigningUp: false });
-        }
-    },
+   signup: async (data) => {
+    set({ isSigningUp: true });
+    try {
+      const res = await apiClient.post("/auth/signup", data);
+      set({ authUser: res.data });
+
+      toast.success("Account created successfully!");
+    } catch (error) {
+      toast.error(error.response.data.message);
+    } finally {
+      set({ isSigningUp: false });
+    }
+  },
     login: async (formData) => {
          set({ isLoggingIn: true });
          try {
@@ -44,6 +45,14 @@ export const useAuthStore = create((set) => ({
              set({ isLoggingIn: false });
          }
      },
-
+logout: async () => {
+    try {
+        await apiClient.post("/auth/logout");
+        set({ authUser: null });
+        toast.success("Logged out successfully!");
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Logout failed");
+    }
+},
 
 }));
