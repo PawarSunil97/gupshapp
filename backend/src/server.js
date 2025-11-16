@@ -6,7 +6,7 @@ import { connectDb } from '../config/db.js';
 import authRouter from './routes/auth.route.js';
 import messageRouter from './routes/message.route.js';
 import cookieParser from 'cookie-parser';
-
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
@@ -19,6 +19,7 @@ connectDb();
 //use middlewares
 
 app.use(express.json());
+app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));  
 app.use(cookieParser())
 //  Register API routes
 app.use('/api/auth', authRouter);
