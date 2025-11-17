@@ -10,7 +10,7 @@ allContacts: [],
     selectedUser: null,
     isUserLoading: false,
     isMessagesLoading: false,
-    isSoundEnabled: localStorage.getItem("isSoundEnabled") === true,
+    isSoundEnabled: JSON.parse(localStorage.getItem("isSoundEnabled")) === true,
     toggleSound: () => {
         const current = get().isSoundEnabled;
         localStorage.setItem("isSoundEnabled", !current);
@@ -31,7 +31,7 @@ allContacts: [],
             set({ isUserLoading: false });
         }
     },
-    getMyChatPatners: async () => {
+    getMyChatPartners: async () => {
         set({ isUserLoading: true });
         try {
             const res = await apiClient.get("/message/chats");
