@@ -21,7 +21,7 @@ const ContactList = () => {
           <div className="flex items-center gap-3">
             <div className={`avatar `}>
               <div className="size-12 rounded-full">
-                <img src={contact.profilePic || "/avatar.png"} />
+                <img src={contact.profilePicture || "/avatar.png"} />
               </div>
             </div>
             <h4 className="text-slate-200 font-medium">{contact.fullName}</h4>
@@ -29,7 +29,7 @@ const ContactList = () => {
         </div>
       ))}
     </>
-  )
+  );
 }
 
 export default ContactList
