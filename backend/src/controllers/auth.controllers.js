@@ -5,128 +5,120 @@ import { sendWelcomeEmail } from "../emails/EmailHandler.js";
 import { ENV } from "../../Env.js";
 import cloudinary from "../utils/cloudinary.js";
 
-const formatUserResponse = (user) => ({
-  _id: user._id,
-  fullName: user.fullName,
-  email: user.email,
-  profilePicture: user.profilePicture || "",
-});
+export const signup = async (req, res) => {
+  const { fullName, email, password } = req.body;
 
-export const signup = async(req, res) => {
-    const { fullName, email, password } = req.body;
-    try {
-        if(!fullName || !email || !password) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-        if(password.length < 6) {
-            return res.status(400).json({ message: 'Password must be at least 6 characters' });
-        }
-        // check if email not valid
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if(!emailRegex.test(email)) {
-            return res.status(400).json({ message: 'please enter valid email format' });
-        }
-        const user = await User.findOne({ email });
-        if(user) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-        // hash password
-        const salt= await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt); 
-        const newUser = new User({ fullName, email, password: hashedPassword });
-        if (newUser) {
-            const savedUser=  await newUser.save();
-            generateToken(savedUser._id, res)
-           
-            res.status(201).json({ 
-                message: "Signup successful",
-                user: formatUserResponse(savedUser)
-            }); 
-            try {
-                await sendWelcomeEmail(savedUser.email, savedUser.fullName,ENV.CLIENT_URL);
-            }catch (error) {
-                console.error('Failed to send welcome email:', error);
-            }
-        } else {
-            return res.status(400).json({ message: 'Invalid user data' });
-        }
-    } catch (error) {
-        console.error('Error during signup:', error);
-        return res.status(500).json({ message: ' internal Server error' });
-    }
-}
-
-export const login = async(req, res) => {
-    const { email, password } = req.body;
-    try {
-        if(!email || !password) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-        const user = await User.findOne({ email });
-        if(!user) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-       if(!isMatch) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-         }
-        generateToken(user._id, res);
-
-    return res.status(200).json({
-      message: "Login successful",
-      user: formatUserResponse(user),
-    });
-    } catch (error) {
-        return res.status(500).json({ message: ' internal Server error' });
-    }
-}
-
-export const logout = async (_, res) => {
-    
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: ENV.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 0,
-    });
-     res.status(200).json({ message: "Logout successful"
-        
-    })
-}
-export const updateProfile = async (req, res) => {
   try {
-    const { profilePicture } = req.body;
-
-    if (!profilePicture) {
-      return res.status(400).json({ message: "Profile picture is required" });
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    if (!profilePicture.startsWith("data:image/")) {
-      return res.status(400).json({ message: "Invalid image format" });
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const uploaded = await cloudinary.uploader.upload(profilePicture);
+    // check if emailis valid: regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      { profilePicture: uploaded.secure_url },
-      { new: true }
-    ).select("-password");
+    const user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: "Email already exists" });
 
-    res.status(200).json({
-      message: "Profile updated successfully",
-      user: formatUserResponse(updatedUser),
+    // 123456 => $dnjasdkasj_?dmsakmk
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      fullName,
+      email,
+      password: hashedPassword,
     });
 
+    if (newUser) {
+      // before CR:
+      // generateToken(newUser._id, res);
+      // await newUser.save();
+
+      // after CR:
+      // Persist user first, then issue auth cookie
+      const savedUser = await newUser.save();
+      generateToken(savedUser._id, res);
+
+      res.status(201).json({
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        profilePic: newUser.profilePic,
+      });
+
+      try {
+        await sendWelcomeEmail(savedUser.email, savedUser.fullName, ENV.CLIENT_URL);
+      } catch (error) {
+        console.error("Failed to send welcome email:", error);
+      }
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
   } catch (error) {
-    console.error("Error updating profile:", error);
+    console.log("Error in signup controller:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-export const checkAuthStatus = (req, res) => {
-  res.status(200).json({
-    message: "Authenticated",
-    user: formatUserResponse(req.user),
-  });
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    // never tell the client which one is incorrect: password or email
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" });
+
+    generateToken(user._id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
+  } catch (error) {
+    console.error("Error in login controller:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const logout = (_, res) => {
+  res.cookie("jwt", "", { maxAge: 0 });
+  res.status(200).json({ message: "Logged out successfully" });
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePic } = req.body;
+    if (!profilePic) return res.status(400).json({ message: "Profile pic is required" });
+
+    const userId = req.user._id;
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: uploadResponse.secure_url },
+      { new: true }
+    );
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log("Error in update profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
