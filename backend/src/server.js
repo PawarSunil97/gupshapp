@@ -7,23 +7,22 @@ import authRouter from './routes/auth.route.js';
 import messageRouter from './routes/message.route.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import { app, server } from "./utils/socket.js";
 dotenv.config();
 
-const app = express();
-app.use(express.json());
+
 
 const __dirname = path.resolve();
 
-//  connect DB
-connectDb();
+
 //use middlewares
 
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));  
 app.use(cookieParser())
 //  Register API routes
 app.use('/api/auth', authRouter);
-app.use('/api/message', messageRouter);
+app.use('/api/messages', messageRouter);
 
 //  Serve frontend (production only)
 if (process.env.NODE_ENV === 'production') {
@@ -35,6 +34,8 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(ENV.PORT, () => {
+server.listen(ENV.PORT, () => {
   console.log(`Server running at http://localhost:${ENV.PORT}`);
+  //  connect DB
+connectDb();
 });

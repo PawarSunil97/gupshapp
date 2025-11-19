@@ -5,23 +5,26 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useChateStore } from '../store/useChateStore';
 const mouseClickSound = new Audio("/sounds/mouse-click.mp3");
 const ProfileHeader = () => {
-      const { logout, authUser, updateProfile } = useAuthStore();
-      const { isSoundEnabled, toggleSound } = useChateStore();
-    const [selectedImg, setSelectedImg] = useState(null);
-    const fileInputRef = useRef(null);
-    const handleImageUpload = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+  const { logout, authUser, updateProfile } = useAuthStore();
+  const { isSoundEnabled, toggleSound } = useChateStore();
+  const [selectedImg, setSelectedImg] = useState(null);
 
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
+  const fileInputRef = useRef(null);
 
-      reader.onloadend = async () => {
-        const base64Image = reader.result;
-        setSelectedImg(base64Image);
-       await updateProfile({ profilePicture: base64Image });
-      };
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onloadend = async () => {
+      const base64Image = reader.result;
+      setSelectedImg(base64Image);
+      await updateProfile({ profilePic: base64Image });
     };
+  };
+
   return (
     <div className="p-6 border-b border-slate-700/50">
       <div className="flex items-center justify-between">
@@ -33,7 +36,7 @@ const ProfileHeader = () => {
               onClick={() => fileInputRef.current.click()}
             >
               <img
-                src={selectedImg || authUser?.profilePicture || "/avatar.png"}
+                src={selectedImg || authUser.profilePic || "/avatar.png"}
                 alt="User image"
                 className="size-full object-cover"
               />
@@ -54,7 +57,7 @@ const ProfileHeader = () => {
           {/* USERNAME & ONLINE TEXT */}
           <div>
             <h3 className="text-slate-200 font-medium text-base max-w-[180px] truncate">
-              {authUser?.fullName}
+              {authUser.fullName}
             </h3>
 
             <p className="text-slate-400 text-xs">Online</p>
@@ -93,6 +96,5 @@ const ProfileHeader = () => {
       </div>
     </div>
   );
-}
-
-export default ProfileHeader
+};
+export default ProfileHeader;

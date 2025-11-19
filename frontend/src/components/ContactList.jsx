@@ -1,13 +1,17 @@
 import React, { useEffect } from 'react'
 import { useChateStore } from '../store/useChateStore';
 import UsersLoadingSkeleton from './UsersLoadingSkeleton';
+import { useAuthStore } from '../store/useAuthStore';
 
 const ContactList = () => {
-   const { getAllContacts, allContacts, setSelectedUser, isUsersLoading } =
-     useChateStore();
-   useEffect(() => {
-     getAllContacts();
-   }, [getAllContacts]);
+  const { getAllContacts, allContacts, setSelectedUser, isUsersLoading } =
+    useChateStore();
+  const { onlineUsers } = useAuthStore();
+
+  useEffect(() => {
+    getAllContacts();
+  }, [getAllContacts]);
+
   if (isUsersLoading) return <UsersLoadingSkeleton />;
 
   return (
@@ -19,9 +23,13 @@ const ContactList = () => {
           onClick={() => setSelectedUser(contact)}
         >
           <div className="flex items-center gap-3">
-            <div className={`avatar `}>
+            <div
+              className={`avatar ${
+                onlineUsers.includes(contact._id) ? "online" : "offline"
+              }`}
+            >
               <div className="size-12 rounded-full">
-                <img src={contact.profilePicture || "/avatar.png"} />
+                <img src={contact.profilePic || "/avatar.png"} />
               </div>
             </div>
             <h4 className="text-slate-200 font-medium">{contact.fullName}</h4>
@@ -30,6 +38,5 @@ const ContactList = () => {
       ))}
     </>
   );
-}
-
-export default ContactList
+};
+export default ContactList;
